@@ -1,0 +1,126 @@
+
+
+# random points in circle, drawn from 2D uniform distribution
+
+# A: generate N points in 1 x 1 box
+# keep M points within circle radius 1
+
+# B: generate N points in 1 x 1 box
+# keep M points within circle radius 1
+
+# create trips between A and B
+# calculate distances
+
+# make histogram
+# plot lin-lin
+# plot log-log
+
+# make cdf
+# plot lin-lin
+# plot log-log
+
+
+rm(list = ls())
+
+
+pointsInDiscUniform <- function(N) {
+
+  x <- c()
+  y <- c()
+  
+  while(length(y) < N) {
+
+    x.rand <- runif(1, -1, 1)
+    y.rand <- runif(1, -1, 1)
+    
+    if (sqrt(x.rand^2 + y.rand^2) <= 1) {
+      x <- append(x, x.rand)
+      y <- append(y, y.rand)
+    }
+  }
+
+  return(rbind(x,y))
+}
+
+
+distPoints <- function(A, B) {
+
+  distances <- c()
+  
+  for (i in 1:(dim(A.disc.points)[2])) {
+
+      x.diff <- A[1,i] - B[1,i]
+      y.diff <- A[2,i] - B[2,i]
+      
+      euclid.dist <-  sqrt(x.diff^2 + y.diff^2)
+  
+      distances <- append(distances, euclid.dist)
+    }
+  
+  return(distances)
+}
+
+plot.histogram <- function(distances) {
+  
+  x.values <- seq(0,2,.01)
+  myhist <- hist(distances, breaks = x.values, main="lin-lin hist")
+
+  logx <- log10(x.values[-1])
+  logcounts <- log10(myhist$counts)
+  plot(logx, logcounts, main="log-log hist")
+}
+
+plot.pdf <- function(distances) {
+  
+  x.values <- seq(0,2,.01)
+  myhist <- hist(distances, breaks = x.values, plot=F)
+
+  plot(x.values[-1], myhist$density, main="lin-lin PDF")
+  
+  logx <- log10(x.values[-1])
+  logfreq <- log10(myhist$density)
+  plot(logx, logfreq, main="log-log PDF")
+}
+
+plot.ccdf <- function(distances) {
+  
+  sorted.x <- sort(distances)
+
+  cdf <- c()
+  ccdf <- c()
+
+  len <- length(distances)
+
+  for (i in 1:len) {
+    cdf <- append(cdf, i/len)
+    ccdf <- append(ccdf, 1 - cdf[i])
+  }
+
+  plot(sorted.x, ccdf, main="lin-lin CCDF")
+  
+  plot(log10(sorted.x), log10(ccdf), main="log-log CCDF")
+}
+
+
+# number of pairs of points (trips) 
+N <- 1000
+
+# set of A and B points in disc
+A.disc.points <- pointsInDiscUniform(N)
+B.disc.points <- pointsInDiscUniform(N)
+
+# distances between A and B, pairwise
+distances <-  distPoints(A.disc.points, B.disc.points)
+
+# the A points
+plot(A.disc.points[1,], A.disc.points[2,], col="green")
+
+# the B points
+points(B.disc.points[1,], B.disc.points[2,], col="red")
+
+
+
+plot.histogram(distances)
+plot.pdf(distances)
+plot.ccdf(distances)
+
